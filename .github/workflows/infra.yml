@@ -4,14 +4,14 @@ on:
   push:
     branches: [main]
     paths:
-      - 'devops-ai-platform/terraform/**'
-      - 'devops-ai-platform/helm/**'
-      - 'devops-ai-platform/.github/workflows/infra.yml'
+      - 'terraform/**'
+      - 'helm/**'
+      - '.github/workflows/infra.yml'
   pull_request:
     branches: [main]
     paths:
-      - 'devops-ai-platform/terraform/**'
-      - 'devops-ai-platform/helm/**'
+      - 'terraform/**'
+      - 'helm/**'
 
 jobs:
   terraform-plan:
@@ -26,21 +26,21 @@ jobs:
         terraform_version: 1.5.0
 
     - name: Terraform Format Check
-      run: terraform fmt -check -recursive devops-ai-platform/terraform/
+      run: terraform fmt -check -recursive terraform/
 
     - name: Terraform Init
       run: |
-        cd devops-ai-platform/terraform
+        cd terraform
         terraform init -backend=false
 
     - name: Terraform Validate
       run: |
-        cd devops-ai-platform/terraform
+        cd terraform
         terraform validate
 
     - name: Terraform Plan
       run: |
-        cd devops-ai-platform/terraform
+        cd terraform
         terraform plan -out=tfplan
 
   helm-lint:
@@ -53,10 +53,10 @@ jobs:
       uses: azure/setup-helm@v3
 
     - name: Helm Lint
-      run: helm lint devops-ai-platform/helm/ai-app/
+      run: helm lint helm/ai-app/
 
     - name: Helm Template
-      run: helm template devops-ai-platform/helm/ai-app/ > /tmp/helm-manifest.yaml
+      run: helm template helm/ai-app/ > /tmp/helm-manifest.yaml
 
     - name: Validate Kubernetes Manifest
       uses: instrumenta/kubeval-action@master
