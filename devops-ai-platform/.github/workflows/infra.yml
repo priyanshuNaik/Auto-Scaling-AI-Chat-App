@@ -1,0 +1,64 @@
+name: Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'devops-ai-platform/terraform/**'
+      - 'devops-ai-platform/helm/**'
+      - 'devops-ai-platform/.github/workflows/infra.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'devops-ai-platform/terraform/**'
+      - 'devops-ai-platform/helm/**'
+
+jobs:
+  terraform-plan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: 1.5.0
+
+    - name: Terraform Format Check
+      run: terraform fmt -check -recursive devops-ai-platform/terraform/
+
+    - name: Terraform Init
+      run: |
+        cd devops-ai-platform/terraform
+        terraform init -backend=false
+
+    - name: Terraform Validate
+      run: |
+        cd devops-ai-platform/terraform
+        terraform validate
+
+    - name: Terraform Plan
+      run: |
+        cd devops-ai-platform/terraform
+        terraform plan -out=tfplan
+
+  helm-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+
+    - name: Helm Lint
+      run: helm lint devops-ai-platform/helm/ai-app/
+
+    - name: Helm Template
+      run: helm template devops-ai-platform/helm/ai-app/ > /tmp/helm-manifest.yaml
+
+    - name: Validate Kubernetes Manifest
+      uses: instrumenta/kubeval-action@master
+      with:
+        files: /tmp/helm-manifest.yaml
