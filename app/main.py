@@ -1,30 +1,24 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import requests
-import os
+import httpx, os
 
-app = FastAPI()
+app = FastAPI(title='AI Chat API', version='1.0.0')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
-class Prompt(BaseModel):
+class PromptRequest(BaseModel):
     message: str
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+@app.get('/health')
+def health(): return {'status': 'ok'}
 
-@app.post("/chat")
-def chat(prompt: Prompt):
-    url = "https://api.groq.com/openai/v1/chat/completions"
-
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
+@app.post('/chat')
+async def chat(request: PromptRequest):
+    headers = {'Authorization': f'Bearer {GROQ_API_KEY}'}
+    payload = {
+        'model': 'llama3-8b-8192',
+        'messages': [{'role': 'user', 'content': request.message}]
     }
-
-    data = {
-        "model": "llama-3.1-8b-instant",
-        "messages": [{"role": "user", "content": prompt.message}]
-    }
-
-    response = requests.post(url, json=data, headers=headers)
-    print("STATUS:", response.status_code)  # 👈 debug
-    print("RESPONSE:", response.text)       # 👈 debug
+    async with httpx.AsyncClient() as client:
+        response = await client.post(GROQ_URL, json=payload, headers=headers)
     return response.json()
