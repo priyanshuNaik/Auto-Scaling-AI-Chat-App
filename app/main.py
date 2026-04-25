@@ -1,8 +1,8 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-import httpx
 import os
 
+import httpx
+from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI(title="AI Chat API", version="1.0.0")
 
